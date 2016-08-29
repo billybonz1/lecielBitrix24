@@ -1,0 +1,10 @@
+{
+  "name": "lecielBitrix24",
+  "homepage": "https://github.com/billybonz1/lecielBitrix24",
+  "authors": [
+    "Artem <kalini.art@gmail.com>"
+  ],
+  "description": "",
+  "main": "bower.json",
+  "license": "MIT"
+}
