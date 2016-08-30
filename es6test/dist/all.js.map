@@ -1,0 +1,1 @@
+{"version":3,"sources":["script.js"],"names":["name"],"mappings":";;AAAA,IAAIA,OAAO,CAAX","file":"all.js","sourcesContent":["let name = 1; "],"sourceRoot":"/source/"}

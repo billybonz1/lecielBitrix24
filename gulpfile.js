@@ -3,11 +3,13 @@ var gulp         = require('gulp'),
 		autoprefixer = require('gulp-autoprefixer'),
 		cleanCSS    = require('gulp-clean-css'),
 		browserSync  = require('browser-sync').create(),
-		concat       = require('gulp-concat'),
 		imagemin = require('gulp-imagemin'),
 		pngquant    = require('imagemin-pngquant'),
 		cache       = require('gulp-cache'),
-		uglify       = require('gulp-uglify');
+		uglify       = require('gulp-uglify'),
+		sourcemaps = require("gulp-sourcemaps"),
+		babel = require("gulp-babel"),
+		concat = require("gulp-concat");
 
 gulp.task('img', function() {
     return gulp.src('app/img/**/*')
@@ -29,6 +31,15 @@ gulp.task('browser-sync', ['styles', 'scripts'], function() {
 		});
 });
 
+gulp.task('es6browser-sync', ['es6'], function() {
+	browserSync.init({
+		server: {
+			baseDir: "./es6test"
+		},
+		notify: false
+	});
+});
+
 gulp.task('styles', function () {
 	return gulp.src('scss/*.scss')
 	.pipe(sass({
@@ -43,8 +54,7 @@ gulp.task('styles', function () {
 gulp.task('scripts', function() {
 	return gulp.src([
 		'libs/jquery/dist/jquery.min.js',
-		'libs/material-design-lite/material.min.js',
-		'libs/bootstrap/dist/js/bootstrap.min.js'
+		'libs/material-design-lite/material.min.js'
 		])
 		.pipe(concat('libs.js'))
 		//.pipe(uglify()) //Minify libs.js
@@ -61,11 +71,23 @@ gulp.task('common', function() {
     .pipe(gulp.dest('./app/js/'));
 });
 
+gulp.task('es6',function () {
+	return gulp.src("es6test/*.js")
+		.pipe(sourcemaps.init())
+		.pipe(babel())
+		.pipe(concat("all.js"))
+		.pipe(sourcemaps.write("."))
+		.pipe(gulp.dest("es6test/dist"));
+});
+
 gulp.task('watch', function () {
 	gulp.watch('scss/*.scss', ['styles']);
 	gulp.watch('app/libs/**/*.js', ['scripts']);
+	gulp.watch('es6test/*.js', ['es6']);
+	gulp.watch('es6test/*.html').on('change', browserSync.reload);
 	gulp.watch('app/js/*.js').on("change", browserSync.reload);
 	gulp.watch('app/*.html').on('change', browserSync.reload);
 });
 
-gulp.task('default', [/*'browser-sync',*/ 'watch']);
+gulp.task('default', ['es6browser-sync', 'watch']);
+

@@ -8,44 +8,50 @@
 </head>
 <body id="app">
 
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
-        Button
-    </button>
 
 
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-lg-12">
-                <p id="user-name" class="bg-primary padding15"></p>
-            </div>
+    <i class="material-icons">done</i>
+    <div class="mdl-grid">
+        <div class="mdl-cell mdl-cell--12-col">
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+                Button
+            </button>
         </div>
-
-        <div class="row">
-            <div class="col-md-8 col-sm-6">
-                <div class="panel panel-default">
-                        <table class="table table-responsive">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Название</th>
-                                    <th>Сумма</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dealList">
-                                <tr>
-                                    <td colspan="3">
-                                        <div class="mdl-spinner mdl-js-spinner is-active"></div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                </div>
-            </div>
-            <div class="col-md-4 col-sm-6">
-                <div class="panel panel-success">
-                    <div id="dealSum" class="panel-body text-right">
+        <div class="mdl-cell mdl-cell--12-col">
+            <span class="mdl-chip mdl-chip--contact">
+                <span id="user-name--first-letter" class="mdl-chip__contact mdl-color--teal mdl-color-text--white">A</span>
+                <span id="user-name" class="mdl-chip__text"></span>
+            </span>
+        </div>
+        <div class="mdl-cell mdl-cell--8-col mdl-cell--6-col-phone">
+            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp dealList">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th class="mdl-data-table__cell--non-numeric">Название</th>
+                    <th class="mdl-data-table__cell--non-numeric">Сумма</th>
+                </tr>
+                </thead>
+                <tbody id="dealList">
+                <tr>
+                    <td colspan="3">
+                        <div class="mdl-typography--text-center">
+                            <div class="mdl-spinner mdl-js-spinner is-active"></div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mdl-cell mdl-cell--4-col mdl-cell--6-col-phone">
+            <div class="dealSum mdl-card mdl-shadow--2dp">
+                <div class="mdl-card__title mdl-card--expand">
+                    <h2 class="mdl-card__title-text mdl-typography--text-center" id="dealSum">
                         <div class="mdl-spinner mdl-js-spinner is-active"></div>
-                    </div>
+                    </h2>
+                </div>
+                <div class="mdl-card__supporting-text" >
+                    Общая сумма
                 </div>
             </div>
         </div>
@@ -61,6 +67,7 @@
 
             app.saveFrameWidth();
 
+            app.displayDealersList();
 
             app.displayCurrentUser('#user-name');
             app.displayDealList();

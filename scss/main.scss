@@ -1,10 +1,30 @@
-@import "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css";
 @import "https://fonts.googleapis.com/icon?family=Material+Icons";
 @import "https://code.getmdl.io/1.2.0/material.blue-light_blue.min.css";
 @import "https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&subset=cyrillic";
+body{
+  font-family: Roboto;
+}
 .padding15{
   padding: 15px;
 }
 .volume{
   font-size: 30px;
+}
+.dealSum{
+  width: 100%;
+  min-height: 97px;
+  .mdl-card__title{
+    padding-bottom: 0;
+  }
+  .mdl-card__title-text{
+    width: 100%;
+  }
+}
+
+
+.dealList{
+  thead th{
+    font-size: 13px;
+    text-transform: uppercase;
+  }
 }
