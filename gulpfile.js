@@ -74,7 +74,7 @@ gulp.task('common', function() {
 gulp.task('es6',function () {
 	return gulp.src("es6test/*.js")
 		.pipe(sourcemaps.init())
-		.pipe(babel())
+		.pipe(babel()).on('error',  console.error.bind(console))
 		.pipe(concat("all.js"))
 		.pipe(sourcemaps.write("."))
 		.pipe(gulp.dest("es6test/dist"));
@@ -84,6 +84,7 @@ gulp.task('watch', function () {
 	gulp.watch('scss/*.scss', ['styles']);
 	gulp.watch('app/libs/**/*.js', ['scripts']);
 	gulp.watch('es6test/*.js', ['es6']);
+	gulp.watch('es6test/*.js').on("change", browserSync.reload);
 	gulp.watch('es6test/*.html').on('change', browserSync.reload);
 	gulp.watch('app/js/*.js').on("change", browserSync.reload);
 	gulp.watch('app/*.html').on('change', browserSync.reload);

@@ -68,18 +68,6 @@ application.prototype.displayDealersList = function(){
         }
     );
 
-    BX24.callMethod(
-        "crm.status.entity.types",
-        {},
-        function(result)
-        {
-            if(result.error())
-                console.error(result.error());
-            else
-                console.dir(result.data());
-        }
-    );
-
 };
 
 
@@ -98,9 +86,8 @@ application.prototype.saveFrameWidth  = function() {
 
 
 
-application.prototype.prepareEnity = function(arEntityDesc) {
+application.prototype.prepareEntity = function(arEntityDesc) {
     var batch = [];
-
     batch.push(['entity.add', {'ENTITY': arEntityDesc.NAME, 'NAME': arEntityDesc.DESC, 'ACCESS': {AU: 'W'}}]);
 };
 
@@ -120,6 +107,34 @@ application.prototype.addDealersPriceEntity = function(){
         ]
     };
 };
+
+
+application.prototype.chooseContactGroup = function(dialog){
+    BX24.callMethod(
+        "crm.status.entity.items",
+        {
+            entityId: 'CONTACT_TYPE'
+        },
+        function(result)
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+                var resultHTML = "<ul>";
+                result.data().forEach(function(item, i, arr) {
+                    resultHTML += "<li><a href='"+item.STATUS_ID+"'>"+item.NAME+"</li></a>";
+                });
+                resultHTML += "</ul>";
+                dialog.querySelector('.mdl-dialog__content').innerHTML = resultHTML;
+        }
+    );
+};
+
+
+
+
+
 
 app = new application();
 
