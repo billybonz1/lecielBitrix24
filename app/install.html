@@ -46,9 +46,10 @@
 <script src="//api.bitrix24.com/api/v1/"></script>
 <script src="js/app.js"></script>
 <script>
+    var curapp;
     $(function () {
-
         BX24.init(function () {
+            curapp = app;
             app.saveFrameWidth();
             var contactTypes = document.querySelector('#contactTypes');
             var createDealerListButton = document.querySelector('#createDealerList');
