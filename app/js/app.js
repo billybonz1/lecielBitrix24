@@ -41,13 +41,7 @@ application.prototype.displayDealersList = function(){
                         if(result.error()){
                             console.error(result.error());
                         } else {
-                            var data  = result.data();
-                            for (indexDealer in data){
-                                curapp.dealerList.push({
-                                    id: data[indexDealer].ID,
-                                    name: data[indexDealer].NAME + " " + data[indexDealer].LAST_NAME
-                                });
-                            }
+                            curapp.dealerList = curapp.dealerList.concat(result.data());
 
                             if(result.more()){
                                 result.next();
@@ -72,19 +66,15 @@ application.prototype.DealersListReplaceHTML = function(){
 };
 
 
-
-
-
-
 application.prototype.currentDealerDealList = function(i){
     var curapp = this;
     curapp.DEBT_SUM = 0;
-
+    console.log(curapp.dealerList);
     BX24.callMethod(
         "crm.deal.list",
         {
             order: { "STAGE_ID": "ASC" },
-            filter: { "CONTACT_ID": curapp.dealerList[i].id},
+            filter: { "CONTACT_ID": curapp.dealerList[i].ID},
             select: [ "OPPORTUNITY", "CURRENCY_ID", "STAGE_ID"]
         },
         function(result)
@@ -95,7 +85,6 @@ application.prototype.currentDealerDealList = function(i){
             else
             {
                 var dataDeal = result.data();
-                var dealersHTML = "";
                 for (indexDeal in dataDeal){
                     if(dataDeal[indexDeal].STAGE_ID != "WON"){
                         curapp.DEBT_SUM += parseFloat(dataDeal[indexDeal].OPPORTUNITY);
@@ -114,7 +103,7 @@ application.prototype.currentDealerDealList = function(i){
                     }else if(curapp.DEBT_SUM > 8000){
                         rowClass = 'row-red';
                     }
-                    curapp.dealersHTML += '<tr class="'+rowClass+'"><th scope="row">' + curapp.dealerList[i].id + '</th><td class="mdl-data-table__cell--non-numeric">' + curapp.dealerList[i].name + '</td>'
+                    curapp.dealersHTML += '<tr class="'+rowClass+'"><th scope="row">' + curapp.dealerList[i].ID + '</th><td class="mdl-data-table__cell--non-numeric">' + curapp.dealerList[i].NAME + " " + curapp.dealerList[i].LAST_NAME + '</td>'
                         + '<td class="mdl-data-table__cell--non-numeric">'+curapp.DEBT_SUM+'</td></tr>';
                     var j = i + 1;
                     if(curapp.dealerList.length == j){
@@ -191,7 +180,8 @@ application.prototype.finishInstallation = function(arInfo){
             {CODE: 'DATE_STATUS', NAME: 'Статус отправки', TYPE: 'S'},
             {CODE: 'PAYMENT_STATUS', NAME: 'Статус оплаты', TYPE: 'S'},
             {CODE: 'NAME', NAME: 'Имя сделки', TYPE: 'S'},
-            {CODE: 'TOTAL_SUM', NAME: 'Сумма сделки итого', TYPE: 'N'}
+            {CODE: 'TOTAL_SUM', NAME: 'Сумма сделки итого', TYPE: 'N'},
+            {CODE: 'CURRENCY_VALUE', NAME: 'Курс доллара', TYPE: 'N'}
         ]
     };
     var arDealingsItemsEntity  = {
