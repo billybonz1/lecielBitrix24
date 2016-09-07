@@ -13,62 +13,123 @@ application.prototype.displayCurrentUser = function (selector) {
 };
 
 
-application.prototype.displayDealList = function() {
-    BX24.callMethod(
-        'crm.deal.list',
-        {
-            order: {"STAGE_ID" : "ASC"},
-            // filter: {"ASSIGNED_BY_ID": 3},
-            select: ["ID", "TITLE", "STAGE_ID", 'OPPORTUNITY']
+
+application.prototype.displayDealersList = function(){
+//Выводим список дилеров и их долгов на первом экране
+    var curapp = this;
+    curapp.dealerList = [];
+    curapp.dealersHTML = "";
+    BX24.callMethod('entity.item.get', {
+            ENTITY: "info",
+            SORT: {DATE_ACTIVE_FROM: 'ASC'}
         },
-        function(result)
-        {
+
+        function (result) {
             if(result.error()){
                 console.error(result.error());
-            } else {
-                var data  = result.data();
-                var dealHTML = "", dealSum = 0;
-                for (indexDeal in data){
-                    dealSum += parseFloat(data[indexDeal].OPPORTUNITY);
-                    dealHTML += '<tr><th scope="row">' + data[indexDeal].ID + '</th><td class="mdl-data-table__cell--non-numeric">' + data[indexDeal].TITLE + '</td>'
-                        + '<td class="mdl-data-table__cell--non-numeric">'+data[indexDeal].OPPORTUNITY+'</td></tr>';
-                }
+            }else{
+                var DEALERS_CONTACT_TYPE = result.data()[0].PROPERTY_VALUES.DEALER_CONTACT_TYPE;
+                BX24.callMethod(
+                    "crm.contact.list",
+                    {
+                        order: { "DATE_CREATE": "ASC" },
+                        filter: { "TYPE_ID": DEALERS_CONTACT_TYPE },
+                        select: [ "ID", "NAME", "LAST_NAME", "TYPE_ID", "SOURCE_ID" ]
+                    },
+                    function(result)
+                    {
+                        if(result.error()){
+                            console.error(result.error());
+                        } else {
+                            var data  = result.data();
+                            for (indexDealer in data){
+                                curapp.dealerList.push({
+                                    id: data[indexDealer].ID,
+                                    name: data[indexDealer].NAME + " " + data[indexDealer].LAST_NAME
+                                });
+                            }
 
+                            if(result.more()){
+                                result.next();
+                            }else{
+                                curapp.currentDealerDealList(0);
+                            }
 
-                if(result.more()){
-                    result.next();
-                }else{
-                    $("#dealList").html(dealHTML);
-                    $("#dealSum").html(dealSum);
-                }
-
+                        }
+                    }
+                );
             }
         }
     );
 };
 
 
-application.prototype.displayDealersList = function(){
+application.prototype.DealersListReplaceHTML = function(){
+    var curapp = this;
+    $("#dealersList").html(curapp.dealersHTML);
+    curapp.resizeFrame();
+    curapp.dealersHTML = "";
+};
+
+
+
+
+
+
+application.prototype.currentDealerDealList = function(i){
+    var curapp = this;
+    curapp.DEBT_SUM = 0;
+
     BX24.callMethod(
-        "crm.contact.list",
+        "crm.deal.list",
         {
-            order: { "DATE_CREATE": "ASC" },
-            filter: { "TYPE_ID": 'SUPPLIER' }
+            order: { "STAGE_ID": "ASC" },
+            filter: { "CONTACT_ID": curapp.dealerList[i].id},
+            select: [ "OPPORTUNITY", "CURRENCY_ID", "STAGE_ID"]
         },
         function(result)
         {
+            curapp.DEBT_SUM = 0;
             if(result.error())
                 console.error(result.error());
             else
             {
-                console.dir(result.data());
-                if(result.more())
+                var dataDeal = result.data();
+                var dealersHTML = "";
+                for (indexDeal in dataDeal){
+                    if(dataDeal[indexDeal].STAGE_ID != "WON"){
+                        curapp.DEBT_SUM += parseFloat(dataDeal[indexDeal].OPPORTUNITY);
+                    }
+                }
+                if(result.more()){
                     result.next();
+                }else{
+                    var rowClass = "";
+                    if(curapp.DEBT_SUM == 0){
+                        rowClass = 'row-green';
+                    }else if(curapp.DEBT_SUM <= 2000){
+                        rowClass = 'row-yellow';
+                    }else if(curapp.DEBT_SUM > 2000 && curapp.DEBT_SUM <= 8000){
+                        rowClass = 'row-orange';
+                    }else if(curapp.DEBT_SUM > 8000){
+                        rowClass = 'row-red';
+                    }
+                    curapp.dealersHTML += '<tr class="'+rowClass+'"><th scope="row">' + curapp.dealerList[i].id + '</th><td class="mdl-data-table__cell--non-numeric">' + curapp.dealerList[i].name + '</td>'
+                        + '<td class="mdl-data-table__cell--non-numeric">'+curapp.DEBT_SUM+'</td></tr>';
+                    var j = i + 1;
+                    if(curapp.dealerList.length == j){
+                        curapp.DealersListReplaceHTML();
+                    }else{
+                        curapp.currentDealerDealList(j);
+                    }
+
+                }
+
             }
         }
     );
-
 };
+
 
 
 
@@ -89,24 +150,104 @@ application.prototype.saveFrameWidth  = function() {
 application.prototype.prepareEntity = function(arEntityDesc) {
     var batch = [];
     batch.push(['entity.add', {'ENTITY': arEntityDesc.NAME, 'NAME': arEntityDesc.DESC, 'ACCESS': {AU: 'W'}}]);
+    batch.push(['entity.update', {'ENTITY': arEntityDesc.NAME, 'ACCESS': {AU: 'W'}}]);
+
+    for(indexProperty in arEntityDesc.PROPERTIES)
+        batch.push(['entity.item.property.add', {
+            ENTITY: arEntityDesc.NAME,
+            PROPERTY: arEntityDesc.PROPERTIES[indexProperty].CODE,
+            NAME: arEntityDesc.PROPERTIES[indexProperty].NAME,
+            TYPE: arEntityDesc.PROPERTIES[indexProperty].TYPE
+        }]);
+
+    return batch;
 };
 
 
 
 
 
-// Создание хранилища цен для каждой позиции отдельного дилера
-application.prototype.addDealersPriceEntity = function(){
-    var arDealersPriceEntity  = {
-        NAME: "dealers_price",
-        DESC: 'Dealers Price Data',
+// Создание хранилищ
+application.prototype.finishInstallation = function(arInfo){
+    var arInfoEntity  = {
+        NAME: "info",
+        DESC: 'Хранилище с установовчными данными приложения',
         PROPERTIES: [
-            {CODE: 'ID_POST', NAME: 'ID позиции', TYPE: 'N'},
-            {CODE: 'PRICE', NAME: 'Цена позиции', TYPE: 'N'},
-            {CODE: 'ID_DEALER', NAME: 'ID дилера', TYPE: 'N'}
+            {CODE: 'DEALER_CONTACT_TYPE', NAME: 'Тип Контактов Дилеров', TYPE: 'S'},
+            {CODE: 'CURRENCY', NAME: 'Валюта', TYPE: 'S'},
+            {CODE: 'RATE', NAME: 'Курс доллара', TYPE: 'N'}
         ]
     };
+
+    var arDealingsEntity  = {
+        NAME: "dealings",
+        DESC: 'Хранилище для хранения сделок с дилерами',
+        PROPERTIES: [
+            {CODE: 'ORDER_ID', NAME: 'ID сделки', TYPE: 'N'},
+            {CODE: 'DEALER_ID', NAME: 'ID дилера', TYPE: 'N'},
+            {CODE: 'ARTICUL', NAME: 'Артикул сделки', TYPE: 'S'},
+            {CODE: 'DATE_START', NAME: 'Дата получения заказа', TYPE: 'S'},
+            {CODE: 'DATE_END', NAME: 'Дата отправки заказа', TYPE: 'S'},
+            {CODE: 'DATE_STATUS', NAME: 'Статус отправки', TYPE: 'S'},
+            {CODE: 'PAYMENT_STATUS', NAME: 'Статус оплаты', TYPE: 'S'},
+            {CODE: 'NAME', NAME: 'Имя сделки', TYPE: 'S'},
+            {CODE: 'TOTAL_SUM', NAME: 'Сумма сделки итого', TYPE: 'N'}
+        ]
+    };
+    var arDealingsItemsEntity  = {
+        NAME: "dealings_items",
+        DESC: 'Хранилище для хранения позиций в сделках',
+        PROPERTIES: [
+            {CODE: 'ITEM_ID', NAME: 'ID позиции', TYPE: 'N'},
+            {CODE: 'ORDER_ID', NAME: 'ID сделки', TYPE: 'N'},
+            {CODE: 'ITEM_PRICE', NAME: 'Цена позиции', TYPE: 'N'}
+        ]
+    };
+
+    var arDealersPriceEntity  = {
+        NAME: "dealings_price",
+        DESC: 'Хранилище для хранения цен позиций для каждого',
+        PROPERTIES: [
+            {CODE: 'ITEM_ID', NAME: 'ID позиции', TYPE: 'N'},
+            {CODE: 'DEALER_ID', NAME: 'ID дилера', TYPE: 'N'},
+            {CODE: 'DEALER_PRICE', NAME: 'Цена позиции', TYPE: 'N'},
+            {CODE: 'ITEM_NAME', NAME: 'Имя позиции', TYPE: 'S'}
+        ]
+    };
+
+    var arEntityBatch = this.prepareEntity(arInfoEntity);
+
+    arEntityBatch.push(['entity.item.add', {
+        ENTITY: 'info',
+        DATE_ACTIVE_FROM: new Date(),
+        NAME: 'Тип Контактов Дилеров',
+        PROPERTY_VALUES: {
+            DEALER_CONTACT_TYPE: arInfo.DEALER_CONTACT_TYPE
+        }
+    }]);
+
+    var curapp = this;
+
+    BX24.callBatch(arEntityBatch, function(result) {
+        BX24.callMethod('entity.item.get', {
+            ENTITY: "info",
+            SORT: {DATE_ACTIVE_FROM: 'ASC'}
+            },
+
+            function (result) {
+                if(result.error()){
+                    console.error(result.error());
+                }else{
+                    BX24.installFinish();
+                }
+            }
+        );
+    });
+
+
 };
+
+
 
 
 application.prototype.chooseContactGroup = function(dialog){
@@ -121,11 +262,10 @@ application.prototype.chooseContactGroup = function(dialog){
                 console.error(result.error());
             else
                 console.dir(result.data());
-                var resultHTML = "<ul>";
+                var resultHTML = '';
                 result.data().forEach(function(item, i, arr) {
-                    resultHTML += "<li><a href='"+item.STATUS_ID+"'>"+item.NAME+"</li></a>";
+                    resultHTML += "<button data-id='"+item.STATUS_ID+"' class='mdl-button mdl-js-button mdl-button--raised mdl-button--colored'>"+item.NAME+"</button>";
                 });
-                resultHTML += "</ul>";
                 dialog.querySelector('.mdl-dialog__content').innerHTML = resultHTML;
         }
     );

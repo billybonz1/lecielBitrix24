@@ -90,5 +90,5 @@ gulp.task('watch', function () {
 	gulp.watch('app/*.html').on('change', browserSync.reload);
 });
 
-gulp.task('default', ['es6browser-sync', 'watch']);
+gulp.task('default', [/*'es6browser-sync',*/ 'watch']);
 

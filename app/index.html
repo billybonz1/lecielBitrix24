@@ -9,8 +9,6 @@
 <body id="app">
 
 
-
-    <i class="material-icons">done</i>
     <div class="mdl-grid">
         <div class="mdl-cell mdl-cell--12-col">
             <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
@@ -23,16 +21,16 @@
                 <span id="user-name" class="mdl-chip__text"></span>
             </span>
         </div>
-        <div class="mdl-cell mdl-cell--8-col mdl-cell--6-col-phone">
+        <div class="mdl-cell mdl-cell--12-col">
             <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp dealList">
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th class="mdl-data-table__cell--non-numeric">Название</th>
-                    <th class="mdl-data-table__cell--non-numeric">Сумма</th>
+                    <th class="mdl-data-table__cell--non-numeric">Имя дилера</th>
+                    <th class="mdl-data-table__cell--non-numeric">Сумма долга</th>
                 </tr>
                 </thead>
-                <tbody id="dealList">
+                <tbody id="dealersList">
                 <tr>
                     <td colspan="3">
                         <div class="mdl-typography--text-center">
@@ -43,18 +41,6 @@
                 </tbody>
             </table>
         </div>
-        <div class="mdl-cell mdl-cell--4-col mdl-cell--6-col-phone">
-            <div class="dealSum mdl-card mdl-shadow--2dp">
-                <div class="mdl-card__title mdl-card--expand">
-                    <h2 class="mdl-card__title-text mdl-typography--text-center" id="dealSum">
-                        <div class="mdl-spinner mdl-js-spinner is-active"></div>
-                    </h2>
-                </div>
-                <div class="mdl-card__supporting-text" >
-                    Общая сумма
-                </div>
-            </div>
-        </div>
     </div>
 
 
@@ -64,13 +50,9 @@
 <script>
     $(function () {
         BX24.init(function () {
-
             app.saveFrameWidth();
-
             app.displayDealersList();
-
             app.displayCurrentUser('#user-name');
-            app.displayDealList();
         });
     });
 </script>

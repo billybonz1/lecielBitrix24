@@ -10,21 +10,32 @@ body{
 .volume{
   font-size: 30px;
 }
-.dealSum{
-  width: 100%;
-  min-height: 97px;
-  .mdl-card__title{
-    padding-bottom: 0;
-  }
-  .mdl-card__title-text{
-    width: 100%;
-  }
-}
-
-
 .dealList{
+  width: 100%;
   thead th{
     font-size: 13px;
     text-transform: uppercase;
   }
+}
+#contactTypes button{
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+
+
+.row-green{
+  background: greenyellow;
+}
+
+.row-yellow{
+  background: yellow;
+}
+
+.row-orange{
+  background: orange;
+}
+
+.row-red{
+  background: red;
 }
