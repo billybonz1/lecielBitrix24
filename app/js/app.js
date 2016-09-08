@@ -1,13 +1,30 @@
 function application(){
 }
+application.prototype.isDataLoaded = function(){
+    for(keyIndex in this.appLoadedKeys)
+        if (this.appLoadedKeys[keyIndex].loaded !== true) return;
+    this.processUserInterface();
+};
 
-application.prototype.displayCurrentUser = function (selector) {
+application.prototype.addLoadedKey = function(aKey){
+    this.appLoadedKeys[aKey] = {
+        loaded: false
+    };
+};
+
+
+application.prototype.displayCurrentUser = function () {
+    this.appLoadedKeys = [];
+    var curapp = this;
+    curapp.addLoadedKey('current-user');
+    curapp.addLoadedKey('dealers-list');
     BX24.callMethod(
         'user.current',
         {},
         function (result) {
-            $(selector).html(result.data().NAME + ' ' + result.data().LAST_NAME);
-            $(selector + "--first-letter").html(result.data().NAME[0]);
+            curapp.currentUser = result.data().NAME + ' ' + result.data().LAST_NAME;
+            curapp.appLoadedKeys['current-user'].loaded = true;
+            curapp.isDataLoaded();
         }
     );
 };
@@ -17,7 +34,7 @@ application.prototype.displayCurrentUser = function (selector) {
 application.prototype.displayDealersList = function(){
 //Выводим список дилеров и их долгов на первом экране
     var curapp = this;
-    curapp.dealerList = [];
+    curapp.arDealerList = [];
     curapp.dealersHTML = "";
     BX24.callMethod('entity.item.get', {
             ENTITY: "info",
@@ -41,11 +58,12 @@ application.prototype.displayDealersList = function(){
                         if(result.error()){
                             console.error(result.error());
                         } else {
-                            curapp.dealerList = curapp.dealerList.concat(result.data());
+                            curapp.arDealerList = curapp.arDealerList.concat(result.data());
 
                             if(result.more()){
                                 result.next();
                             }else{
+                                curapp.appLoadedKeys['dealers-list'].loaded = true;
                                 curapp.currentDealerDealList(0);
                             }
 
@@ -58,23 +76,16 @@ application.prototype.displayDealersList = function(){
 };
 
 
-application.prototype.DealersListReplaceHTML = function(){
-    var curapp = this;
-    $("#dealersList").html(curapp.dealersHTML);
-    curapp.resizeFrame();
-    curapp.dealersHTML = "";
-};
-
 
 application.prototype.currentDealerDealList = function(i){
     var curapp = this;
     curapp.DEBT_SUM = 0;
-    console.log(curapp.dealerList);
+    console.log(curapp.arDealerList);
     BX24.callMethod(
         "crm.deal.list",
         {
             order: { "STAGE_ID": "ASC" },
-            filter: { "CONTACT_ID": curapp.dealerList[i].ID},
+            filter: { "CONTACT_ID": curapp.arDealerList[i].ID},
             select: [ "OPPORTUNITY", "CURRENCY_ID", "STAGE_ID"]
         },
         function(result)
@@ -103,11 +114,11 @@ application.prototype.currentDealerDealList = function(i){
                     }else if(curapp.DEBT_SUM > 8000){
                         rowClass = 'row-red';
                     }
-                    curapp.dealersHTML += '<tr class="'+rowClass+'"><th scope="row">' + curapp.dealerList[i].ID + '</th><td class="mdl-data-table__cell--non-numeric">' + curapp.dealerList[i].NAME + " " + curapp.dealerList[i].LAST_NAME + '</td>'
+                    curapp.dealersHTML += '<tr class="'+rowClass+'"><th scope="row">' + curapp.arDealerList[i].ID + '</th><td class="mdl-data-table__cell--non-numeric">' + curapp.arDealerList[i].NAME + " " + curapp.arDealerList[i].LAST_NAME + '</td>'
                         + '<td class="mdl-data-table__cell--non-numeric">'+curapp.DEBT_SUM+'</td></tr>';
                     var j = i + 1;
-                    if(curapp.dealerList.length == j){
-                        curapp.DealersListReplaceHTML();
+                    if(curapp.arDealerList.length == j){
+                        curapp.isDataLoaded();
                     }else{
                         curapp.currentDealerDealList(j);
                     }
@@ -119,6 +130,17 @@ application.prototype.currentDealerDealList = function(i){
     );
 };
 
+
+
+
+application.prototype.processUserInterface = function(screen){
+    var curapp = this;
+    $('#user-name').html(curapp.currentUser);
+    $("#user-name--first-letter").html(curapp.currentUser[0]);
+    $("#dealersList").html(curapp.dealersHTML);
+    curapp.resizeFrame();
+    curapp.dealersHTML = "";
+};
 
 
 
@@ -134,6 +156,24 @@ application.prototype.saveFrameWidth  = function() {
     this.FrameWidth = document.getElementById("app").offsetWidth;
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Installation */
 
 
 application.prototype.prepareEntity = function(arEntityDesc) {
