@@ -9,6 +9,7 @@ var gulp         = require('gulp'),
 		uglify       = require('gulp-uglify'),
 		sourcemaps = require("gulp-sourcemaps"),
 		babel = require("gulp-babel"),
+		react = require('gulp-react'),
 		concat = require("gulp-concat");
 
 gulp.task('img', function() {
@@ -54,10 +55,12 @@ gulp.task('styles', function () {
 gulp.task('scripts', function() {
 	return gulp.src([
 		'libs/jquery/dist/jquery.min.js',
-		'libs/material-design-lite/material.min.js'
+		'libs/material-design-lite/material.min.js',
+		'libs/react/react.min.js',
+		'libs/react/react-dom.min.js'
 		])
 		.pipe(concat('libs.js'))
-		//.pipe(uglify()) //Minify libs.js
+		.pipe(uglify()) //Minify libs.js
 		.pipe(gulp.dest('./app/js/'));
 });
 
@@ -80,9 +83,20 @@ gulp.task('es6',function () {
 		.pipe(gulp.dest("es6test/dist"));
 });
 
+
+gulp.task('jsx', function () {
+	return gulp.src('app/js/*.jsx')
+		.pipe(sourcemaps.init())
+		.pipe(react())
+		.pipe(concat("app.js"))
+		.pipe(sourcemaps.write("."))
+		.pipe(gulp.dest("app/js"));
+});
+
 gulp.task('watch', function () {
 	gulp.watch('scss/*.scss', ['styles']);
 	gulp.watch('app/libs/**/*.js', ['scripts']);
+	gulp.watch('app/js/*.jsx', ['jsx']);
 	gulp.watch('es6test/*.js', ['es6']);
 	gulp.watch('es6test/*.js').on("change", browserSync.reload);
 	gulp.watch('es6test/*.html').on('change', browserSync.reload);
@@ -90,5 +104,5 @@ gulp.task('watch', function () {
 	gulp.watch('app/*.html').on('change', browserSync.reload);
 });
 
-gulp.task('default', [/*'es6browser-sync',*/ 'watch']);
+gulp.task('default', [/*'es6browser-sync',*/'jsx', 'watch']);
 
